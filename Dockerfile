@@ -1,7 +1,47 @@
-FROM java:8-jdk
+FROM centos:centos7
+MAINTAINER Patrick M. Slattery <pslattery@mywebgrocer.org>
 
-RUN apt-get update && apt-get install -y git curl zip && rm -rf /var/lib/apt/lists/*
+# Java Version
+ENV JAVA_VERSION_MAJOR 8
+ENV JAVA_VERSION_MINOR 92
+ENV JAVA_VERSION_BUILD 14
+ENV JAVA_PACKAGE server-jre
+# Set environment
+ENV JAVA_HOME /opt/java
 
+# Download and unarchive Java
+RUN \
+  # overlayfs workaround
+  touch /var/lib/rpm/* && \
+  yum clean all && yum update -y && yum clean all && \
+  curl --fail --retry 3 --insecure --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie"\
+  --location http://download.oracle.com/otn-pub/java/jdk/${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-b${JAVA_VERSION_BUILD}/${JAVA_PACKAGE}-${JAVA_VERSION_MAJOR}u${JAVA_VERSION_MINOR}-linux-x64.tar.gz -#\
+  | gunzip | tar x -C /opt && \
+  mv /opt/jdk1.${JAVA_VERSION_MAJOR}.0_${JAVA_VERSION_MINOR} /opt/java && \
+  rm -rf /opt/java/*src.zip \
+    /opt/java/lib/missioncontrol \
+    /opt/java/lib/visualvm \
+    /opt/java/lib/*javafx* \
+    /opt/java/jre/lib/plugin.jar \
+    /opt/java/jre/lib/ext/jfxrt.jar \
+    /opt/java/jre/bin/javaws \
+    /opt/java/jre/lib/javaws.jar \
+    /opt/java/jre/lib/desktop \
+    /opt/java/jre/plugin \
+    /opt/java/jre/lib/deploy* \
+    /opt/java/jre/lib/*javafx* \
+    /opt/java/jre/lib/*jfx* \
+    /opt/java/jre/lib/amd64/libdecora_sse.so \
+    /opt/java/jre/lib/amd64/libprism_*.so \
+    /opt/java/jre/lib/amd64/libfxplugins.so \
+    /opt/java/jre/lib/amd64/libglass.so \
+    /opt/java/jre/lib/amd64/libgstreamer-lite.so \
+    /opt/java/jre/lib/amd64/libjavafx*.so \
+    /opt/java/jre/lib/amd64/libjfx*.so
+
+# Define default command.
+
+RUN yum install -y git zip && yum clean all
 ENV JENKINS_HOME /var/jenkins_home
 ENV JENKINS_SLAVE_AGENT_PORT 50000
 
